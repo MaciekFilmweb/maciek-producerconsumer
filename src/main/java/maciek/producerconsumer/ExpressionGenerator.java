@@ -1,4 +1,4 @@
-package maciek.producerconsumer.expression;
+package maciek.producerconsumer;
 
 import java.util.Map;
 import java.util.Random;
@@ -8,7 +8,7 @@ import com.google.common.collect.ImmutableMap;
 import lombok.Builder;
 
 @Builder
-public class ExpressionFactory {
+public class ExpressionGenerator {
 
 	private static final int MAXIMUM_EXPRESSION_LENGTH = 100;
 
@@ -16,7 +16,7 @@ public class ExpressionFactory {
 	
 	private final ExpressionValidator expressionValidator;
 
-	public String createExpression() {
+	public String generateExpression() {
 		String expression = generateRandomString();
 		while (!expressionValidator.validate(expression)) {
 			expression = generateRandomString();

@@ -1,30 +1,13 @@
 package maciek.producerconsumer;
 
-import java.util.concurrent.BlockingQueue;
+public interface TaskQueue {
 
-import lombok.Builder;
-
-@Builder
-public class TaskQueue {
-
-	private final int maximumCapacity;
-
-	private final BlockingQueue<Task> queue;
-
-	public double getFillRate() {
-		return 1.0 * (maximumCapacity - queue.remainingCapacity()) / maximumCapacity;
+	default boolean offer(Task task) {
+		return offer(task, 1.0);
 	}
 
-	public boolean offer(Task task) {
-		return queue.offer(task);
-	}
+	boolean offer(Task task, double maxFillRate);
 
-	public Task take() {
-		try {
-			return queue.take();
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-	}
+	Task take();
 
 }

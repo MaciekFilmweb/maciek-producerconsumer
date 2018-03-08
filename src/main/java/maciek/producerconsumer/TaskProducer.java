@@ -1,57 +1,61 @@
 package maciek.producerconsumer;
 
 import lombok.Builder;
+import maciek.producerconsumer.util.Sleep;
 
 @Builder
-public class TaskProducer {
+public class TaskProducer implements Runnable {
 
 	private final TaskFactory taskFactory;
 
 	private final TaskQueue queue;
 
-	private Task nextTask;
+	private Runnable state;
 
-	public void start() {
-		while (true) {
-			fillTheQueue();
-			waitTillQueueIsHalfEmpty();
-		}
-	}
+	private volatile boolean running;
 
-	/**
-	 * @return {@code true} if task was send to the queue, {@code false} if the queue is full.
-	 */
-	public boolean produceNextTask() {
-		if (nextTask == null) {
-			nextTask = taskFactory.createTask();
+	@Override
+	public void run() {
+		init();
+
+		while (running) {
+			state.run();
 		}
-		if (!queue.offer(nextTask)) {
-			return false;
-		}
-		nextTask = taskFactory.createTask();
-		return true;
 	}
 	
-	private void fillTheQueue() {
-		while (true) {
-			if (!produceNextTask()) {
-				return;
+	public void stop() {
+		running = false;
+	}
+
+	private void init() {
+		running = true;
+		state = producing;
+	}
+
+	private final Runnable producing = new Runnable() {
+
+		@Override
+		public void run() {
+			while (running) {
+				if (!queue.offer(taskFactory.createTask())) {
+					break;
+				}
 			}
+			state = waiting;
 		}
-	}
 
-	private void waitTillQueueIsHalfEmpty() {
-		while (queue.getFillRate() > 0.5) {
-			sleep(1000);
+	};
+
+	private final Runnable waiting = new Runnable() {
+
+		@Override
+		public void run() {
+			while (running && !queue.offer(taskFactory.createTask(), 0.5)) {
+				Sleep.sleep(500);
+			}
+			state = producing;
 		}
-	}
 
-	private void sleep(long millis) {
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
+	};
+	
 }

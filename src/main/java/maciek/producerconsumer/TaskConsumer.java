@@ -3,25 +3,29 @@ package maciek.producerconsumer;
 import java.util.function.Consumer;
 
 import lombok.Builder;
-import maciek.producerconsumer.expression.ExpressionEvaluator;
 
 @Builder
-public class TaskConsumer {
+public class TaskConsumer implements Runnable {
 
 	private final TaskQueue queue;
 
 	private final ExpressionEvaluator evaluator;
 
-	private final Consumer<Object> println;
+	private final Consumer<String> println;
 
-	public void start() {
-		while (true) {
-			executeNextTask();
+	private volatile boolean running;
+
+	@Override
+	public void run() {
+		running = true;
+
+		while (running) {
+			println.accept(evaluator.evaluate(queue.take().getExpression()).toString());
 		}
 	}
 
-	public void executeNextTask() {
-		println.accept(evaluator.evaluate(queue.take().getExpression()));
+	public void stop() {
+		running = false;
 	}
 
 }
